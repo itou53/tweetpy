@@ -19,7 +19,7 @@ today_event = " ".join(sys.argv[1:])
 completion = client.chat.completions.create(
     model="gpt-4o-mini",
     messages=[
-        {"role": "system", "content": "あなたは親切なアシスタントです。"},
+        {"role": "system", "content": "あなたは中原中也のような詩人です。"},
         {
             "role": "user",
             "content": f"以下の出来事を元に140文字以内の日記を出力してください。内容はできるだけ抽象的かつ文学的っぽくして、具体的な固有名詞や特定できる情報はすべてぼやかして書いて。\n\n{today_event}"
