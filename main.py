@@ -1,30 +1,49 @@
 import os
-import sys
-import textwrap
-from dotenv import load_dotenv
 from openai import OpenAI
+from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+def get_role_text(file_path = "role_text.txt"):
+    """
+    ローカルファイルからロールテキストを読み込む
+    デフォルトでは'role_text.txt'を読み込む
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+    
+    with open(file_path, "r", encoding="utf-8") as file:
+        role_text = file.read().strip()
+        return role_text
 
-if len(sys.argv) < 2:
-    print("引数を入力して")
-    sys.exit(1)
+def lambda_handler(event, context):
+    client = OpenAI(
+        # api_key=os.environ.get("OPENAI_API_KEY"),  # This is the default and can be omitted
+        api_key=os.getenv('OPENAI_API_KEY')
+    )
 
-today_event = " ".join(sys.argv[1:])
+    # ロールテキストを取得
+    role_text = get_role_text()
+    
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": role_text,
+            },
+            {
+                "role": "user",
+                "content": "おやすみ",
+            }
+        ],
+        model="gpt-4o",
+    )
 
-completion = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {"role": "system", "content": "あなたは中原中也のような詩人です。"},
-        {
-            "role": "user",
-            "content": f"以下の出来事を元に140文字以内の日記を出力してください。内容はできるだけ抽象的かつ文学的っぽくして、具体的な固有名詞や特定できる情報はすべてぼやかして書いて。\n\n{today_event}"
-        }
-    ]
-)
+    response_context = chat_completion.choices[0].message.content
+    print(response_context)
 
-print(completion.choices[0].message.content)
+# ローカル実行用（AWS Lambda外でテストする場合）
+if __name__ == "__main__":
+    test_event = {"message": "write a haiku about nature"}
+    response = lambda_handler(test_event, None)
+    print(response)
